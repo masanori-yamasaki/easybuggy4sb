@@ -17,7 +17,6 @@ public class DeadlockController extends AbstractController {
 
     private final Object lock1 = new Object();
     private final Object lock2 = new Object();
-    private boolean switchFlag = true;
 
     @RequestMapping(value = "/deadlock")
     public ModelAndView process(HttpSession ses, ModelAndView mav, Locale locale) {
@@ -43,12 +42,11 @@ public class DeadlockController extends AbstractController {
     }
 
     private void todoRemove() {
-        switchFlag = !switchFlag;
-        if (switchFlag) {
-            lock12();
-        } else {
-            lock21();
-        }
+        // Fix: Always acquire locks in the same order (lock1 → lock2) to prevent
+        // circular wait between concurrent threads. The previous implementation
+        // alternated between lock12() and lock21() via switchFlag, allowing two
+        // threads to acquire locks in opposite orders and deadlock each other.
+        lock12();
     }
 
     private void lock12() {
