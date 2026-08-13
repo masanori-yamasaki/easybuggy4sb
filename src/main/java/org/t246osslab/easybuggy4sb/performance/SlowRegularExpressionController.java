@@ -35,7 +35,13 @@ public class SlowRegularExpressionController extends AbstractController {
 
 	private boolean isMatched(String word) {
 		log.info("Start Date: {}", new Date());
-		Pattern compile = Pattern.compile("^([a-z0-9]+[-]{0,1}){1,100}$");
+		// Fix: The previous pattern "^([a-z0-9]+[-]{0,1}){1,100}$" contained nested
+		// quantifiers ([a-z0-9]+ inside {1,100}), causing catastrophic backtracking
+		// (ReDoS) on inputs with a trailing invalid character (e.g. "aaaa!").
+		// The new pattern expresses the same intent — one or more alphanumeric blocks
+		// separated by single hyphens — without any nested repetition, eliminating
+		// the backtracking entirely.
+		Pattern compile = Pattern.compile("^[a-z0-9]+(-[a-z0-9]+)*$");
 		Matcher matcher = compile.matcher(word);
 		boolean matches = matcher.matches();
 		log.info("End Date: {}", new Date());
