@@ -1,6 +1,7 @@
 package org.t246osslab.easybuggy4sb.troubles;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -93,6 +94,10 @@ public class DeadlockController2 extends AbstractController {
     }
 
     private void updateUsers(List<User> users, Locale locale, ModelAndView mav) {
+        // Fix: Sort users by id (ascending) before locking to ensure a consistent lock-acquisition
+        // order across all concurrent transactions, preventing circular wait (deadlock).
+        users.sort(Comparator.comparing(User::getUserId));
+
         DefaultTransactionDefinition dtDef = new DefaultTransactionDefinition();
 
         TransactionStatus trnStatus = txMgr.getTransaction(dtDef);
